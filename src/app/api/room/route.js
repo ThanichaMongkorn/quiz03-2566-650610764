@@ -7,40 +7,50 @@ export const GET = async () => {
   readDB();
   return NextResponse.json({
     ok: true,
-    //rooms:
-    //totalRooms:
+    rooms: DB.rooms,
+    totalRooms: DB.rooms.length,
   });
 };
 
 export const POST = async (request) => {
-  const payload = checkToken();
+  let role = null;
 
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: "Invalid token",
-  //   },
-  //   { status: 401 }
-  // );
+  try {
+    const payload = checkToken();
+    role = payload.role;
+  } catch {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: "Invalid token",
+      },
+      { status: 401 }
+    );
+  }
 
   readDB();
-
-  // return NextResponse.json(
-  //   {
-  //     ok: false,
-  //     message: `Room ${"replace this with room name"} already exists`,
-  //   },
-  //   { status: 400 }
-  // );
-
-  const roomId = nanoid();
+  const body = await request.json();
+  //ชื่อห้องซ้ำ
+  const foundRoom = DB.rooms.findIndex((r) => r.roomsName === body.roomsName);
+  if (foundRoom >= 0) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `Room ${body.roomsName} already exists`,
+        //message: `Room ${"replace this with room name"} already exists`,
+      },
+      { status: 400 }
+    );
+  }
+  //ถ้าชื่อไม่ซ้ำ
+  const roomId = nanoid(body);
 
   //call writeDB after modifying Database
   writeDB();
 
   return NextResponse.json({
     ok: true,
-    //roomId,
-    message: `Room ${"replace this with room name"} has been created`,
+    roomId,
+    message: `Room ${body.roomsName} has been created`,
   });
 };
